@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>9no Festival de Videopoesía UNGS</title>
+    <link rel="stylesheet" href="estilos.css">
+    <link rel="icon" href="unicono.ico">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <header>
+        <div><img src="logoTransparente.png" alt="logo centro cultural"></div>
+        <h1>9no Festival de Videopoesía UNGS</h1>
+        <p></p>
+        <p>Universidad Nacional de General Sarmiento</p>
+        <p>Secretaría de Cultura y Medios</p>
+        <p>Área de Artes Visuales</p>
+        <p></p>
+        <nav id="paginacion-nav">
+        </nav>
+    </header>
+    <div class="introduccion">
+        <p class="textoCorto">
+            Novema edición del Festival de Videopoesía UNGS. Consideramos que la disciplina artística que convoca este
+            festival es una oportunidad para ensayar enunciaciones experimentales que exploren el interjuego de la
+            palabra, el texto, lo visual y el sonido. La video poesía al ser un entrecruce de distintas y variadas
+            disciplinas no puede tener esencia. Pero si es un desafío que implica poner a jugar estas dimensiones para
+            ver qué pasa en términos estéticos y poéticos, desde luego, pero también políticos, técnicos, tecnológicos,
+            culturales, de género, etc.
+            <br><br>
+        </p>
+        <p id="firmaCurador">Ángel Jara<br><br></p>
+    </div>
+
+    <div id="contenedor">
+        <div id="videos-container" class="videos">
+        </div>
+    </div>
+
+    <div>
+        <div><img src="footerTranspa.png" alt="logo centro cultural"></div>
+    </div>
+
+    <script>
+        const VIDEOS_POR_PAGINA = 9;
+        let todosLosVideos = [];
+
+        async function cargarTSV() {
+            try {
+                const respuesta = await fetch('infoVideoPoesia2025.tsv');
+                if (!respuesta.ok) {
+                    throw new Error(`Error al cargar el archivo: ${respuesta.statusText}.`);
+                }
+                const texto = await respuesta.text();
+                const lineas = texto.split('\n').slice(1).filter(linea => linea.trim() !== '');
+
+                let videosProcesados = [];
+                lineas.forEach((linea, index) => {
+                    const columnas = linea.split('\t');
+                    
+                    if (columnas.length >= 4) {
+                        const titulo = columnas[0].trim();
+                        const link = columnas[1].trim();
+                        const autor = columnas[3].trim();
+                        
+                        let embedLink = '';
+                        if (link.includes('youtu.be') || link.includes('youtube.com')) {
+                            const videoID = link.match(/(?:youtu\.be\/|youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=))([^"&?\/\s]{11})/);
+                            if (videoID) {
+                                embedLink = `https://www.youtube.com/embed/${videoID[1]}`;
+                            }
+                        } else if (link.includes('vimeo.com')) {
+                            // Nuevo: Maneja enlaces de Vimeo con o sin hash de privacidad
+                            const vimeoID = link.match(/\/(\d+)/);
+                            const vimeoHash = link.match(/\/(\w{10,})\/?$/);
+                            if (vimeoID) {
+                                embedLink = `https://player.vimeo.com/video/${vimeoID[1]}`;
+                                if (vimeoHash) {
+                                    embedLink += `?h=${vimeoHash[1]}`;
+                                }
+                            }
+                        }
+                        
+                        videosProcesados.push({ titulo, link: embedLink, autor, originalLink: link });
+                    } else {
+                        console.warn(`Línea ${index + 2} omitida: Formato de columna incorrecto. Contenido: "${linea}"`);
+                    }
+                });
+
+                todosLosVideos = videosProcesados;
+                console.log(`Se encontraron ${todosLosVideos.length} videos válidos en el archivo.`);
+                const params = new URLSearchParams(window.location.search);
+                const paginaActual = parseInt(params.get('pagina')) || 1;
+                
+                mostrarVideosPorPagina(paginaActual);
+                crearEnlacesPaginacion(paginaActual);
+            } catch (error) {
+                console.error("Error al cargar o procesar el archivo. Por favor, revisa que esté en la misma carpeta.", error);
+                document.getElementById('videos-container').innerHTML = `<p>Error al cargar los videos. Verifique que el archivo <strong>infoVideoPoesia2025.tsv</strong> esté en la misma carpeta y separado por tabulaciones.</p>`;
+            }
+        }
+
+        function mostrarVideosPorPagina(pagina) {
+            const contenedor = document.getElementById('videos-container');
+            contenedor.innerHTML = '';
+            const inicio = (pagina - 1) * VIDEOS_POR_PAGINA;
+            const fin = inicio + VIDEOS_POR_PAGINA;
+            const videosAMostrar = todosLosVideos.slice(inicio, fin);
+
+            if (videosAMostrar.length === 0) {
+                contenedor.innerHTML = '<p>No hay videos en esta página.</p>';
+                return;
+            }
+
+            videosAMostrar.forEach(video => {
+                const videoDiv = document.createElement('div');
+                videoDiv.className = 'unVideo';
+
+                let videoContent;
+                if (video.link) {
+                    videoContent = `
+                        <iframe width="560" height="315" src="${video.link}" frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen></iframe>
+                    `;
+                } else {
+                    videoContent = `
+                        <div class="video-invalido">
+                            <p>Error al cargar el video.</p>
+                            <p><strong>Enlace:</strong> ${video.originalLink}</p>
+                            <p>Por favor, revisa que el enlace sea de YouTube o Vimeo y que sea correcto.</p>
+                        </div>
+                    `;
+                }
+
+                videoDiv.innerHTML = `
+                    ${videoContent}
+                    <div class="nombre">
+                        <p>${video.autor}</p>
+                        <p class="titulo">${video.titulo}</p>
+                    </div>
+                `;
+                contenedor.appendChild(videoDiv);
+            });
+        }
+
+        function crearEnlacesPaginacion(paginaActual) {
+            const nav = document.getElementById('paginacion-nav');
+            nav.innerHTML = '';
+            const totalPaginas = Math.ceil(todosLosVideos.length / VIDEOS_POR_PAGINA);
+
+            for (let i = 1; i <= totalPaginas; i++) {
+                const enlace = document.createElement('a');
+                enlace.href = `?pagina=${i}`;
+                enlace.textContent = `SALA ${i}`;
+                if (i === paginaActual) {
+                    enlace.classList.add('estoyaqui');
+                }
+                nav.appendChild(enlace);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', cargarTSV);
+    </script>
+</body>
+</html>
