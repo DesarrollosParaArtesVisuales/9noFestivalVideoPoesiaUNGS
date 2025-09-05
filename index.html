@@ -25,7 +25,7 @@
     </header>
     <div class="introduccion">
         <p class="textoCorto">
-            Novema edición del Festival de Videopoesía UNGS. Consideramos que la disciplina artística que convoca este
+            Novena edición del Festival de Videopoesía UNGS. Consideramos que la disciplina artística que convoca este
             festival es una oportunidad para ensayar enunciaciones experimentales que exploren el interjuego de la
             palabra, el texto, lo visual y el sonido. La video poesía al ser un entrecruce de distintas y variadas
             disciplinas no puede tener esencia. Pero si es un desafío que implica poner a jugar estas dimensiones para
@@ -74,7 +74,6 @@
                                 embedLink = `https://www.youtube.com/embed/${videoID[1]}`;
                             }
                         } else if (link.includes('vimeo.com')) {
-                            // Nuevo: Maneja enlaces de Vimeo con o sin hash de privacidad
                             const vimeoID = link.match(/\/(\d+)/);
                             const vimeoHash = link.match(/\/(\w{10,})\/?$/);
                             if (vimeoID) {
@@ -162,6 +161,11 @@
                 }
                 nav.appendChild(enlace);
             }
+            // Agrega el enlace a la página de participantes
+            const enlaceParticipantes = document.createElement('a');
+            enlaceParticipantes.href = `participantes.html`;
+            enlaceParticipantes.textContent = 'Participantes';
+            nav.appendChild(enlaceParticipantes);
         }
 
         document.addEventListener('DOMContentLoaded', cargarTSV);

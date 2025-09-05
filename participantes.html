@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>8vo Festival de Videopoesía UNGS</title>
+    <link rel="stylesheet" href="estilos.css">
+    <link rel="icon" href="unicono.ico">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <header>
+        <div><img src="logoTransparente.png" alt="logo centro cultural"></div>
+        <h1>8vo Festival de Videopoesía UNGS</h1>
+        <p></p>
+        <p>Universidad Nacional de General Sarmiento</p>
+        <p>Secretaría de Cultura y Medios</p>
+        <p>Área de Artes Visuales</p>
+        <p></p>
+        <nav id="paginacion-nav">
+        </nav>
+    </header>
+    <div class="introduccion">
+        <p class="textoCorto">
+            Aquí puedes ver la lista completa de videopoemas y sus autores.
+            <br><br>
+        </p>
+    </div>
+
+    <div id="contenedor">
+        <div id="participantes-container" class="participantes">
+            <div class="listado-encabezados">
+                <h3>Videopoesía</h3>
+                <h3>Autores</h3>
+                <h3>Año</h3>
+                <h3>Nacionalidad</h3>
+            </div>
+            <div id="lista-participantes"></div>
+        </div>
+    </div>
+
+    <div>
+        <div><img src="footerTranspa.png" alt="logo centro cultural"></div>
+    </div>
+
+    <script>
+        let todosLosVideos = [];
+
+        async function cargarTSV() {
+            try {
+                const respuesta = await fetch('infoVideoPoesia2025.tsv');
+                if (!respuesta.ok) {
+                    throw new Error(`Error al cargar el archivo: ${respuesta.statusText}.`);
+                }
+                const texto = await respuesta.text();
+                const lineas = texto.split('\n').slice(1).filter(linea => linea.trim() !== '');
+
+                let videosProcesados = [];
+                lineas.forEach((linea, index) => {
+                    const columnas = linea.split('\t');
+                    
+                    if (columnas.length >= 5) {
+                        const titulo = columnas[0].trim();
+                        const link = columnas[1].trim();
+                        const anio = columnas[2].trim();
+                        const autor = columnas[3].trim();
+                        const nacionalidad = columnas[4].trim();
+                        
+                        videosProcesados.push({ titulo, link, autor, anio, nacionalidad });
+                    }
+                });
+
+                todosLosVideos = videosProcesados;
+                mostrarParticipantes();
+                crearEnlacesPaginacion();
+            } catch (error) {
+                console.error("Error al cargar o procesar el archivo. Por favor, revisa que esté en la misma carpeta.", error);
+                document.getElementById('participantes-container').innerHTML = `<p>Error al cargar la lista de participantes. Verifique que el archivo <strong>infoVideoPoesia2025.tsv</strong> esté en la misma carpeta y separado por tabulaciones.</p>`;
+            }
+        }
+
+        function mostrarParticipantes() {
+            const listaParticipantes = document.getElementById('lista-participantes');
+            todosLosVideos.forEach(video => {
+                const filaDiv = document.createElement('div');
+                filaDiv.className = 'fila-participante';
+
+                // Título
+                const tituloDiv = document.createElement('div');
+                const tituloLink = document.createElement('a');
+                tituloLink.href = video.link;
+                tituloLink.textContent = video.titulo;
+                tituloDiv.appendChild(tituloLink);
+                filaDiv.appendChild(tituloDiv);
+
+                // Autores
+                const autorDiv = document.createElement('div');
+                autorDiv.textContent = video.autor;
+                filaDiv.appendChild(autorDiv);
+
+                // Año
+                const anioDiv = document.createElement('div');
+                anioDiv.textContent = video.anio;
+                filaDiv.appendChild(anioDiv);
+
+                // Nacionalidad
+                const nacionalidadDiv = document.createElement('div');
+                nacionalidadDiv.textContent = video.nacionalidad;
+                filaDiv.appendChild(nacionalidadDiv);
+
+                listaParticipantes.appendChild(filaDiv);
+            });
+        }
+
+        function crearEnlacesPaginacion() {
+            const nav = document.getElementById('paginacion-nav');
+            nav.innerHTML = '';
+            const totalPaginas = Math.ceil(todosLosVideos.length / 9);
+            
+            for (let i = 1; i <= totalPaginas; i++) {
+                const enlace = document.createElement('a');
+                enlace.href = `index.html?pagina=${i}`;
+                enlace.textContent = `SALA ${i}`;
+                nav.appendChild(enlace);
+            }
+            const enlaceParticipantes = document.createElement('a');
+            enlaceParticipantes.href = `participantes.html`;
+            enlaceParticipantes.textContent = 'Participantes';
+            enlaceParticipantes.classList.add('estoyaqui');
+            nav.appendChild(enlaceParticipantes);
+        }
+
+        document.addEventListener('DOMContentLoaded', cargarTSV);
+    </script>
+</body>
+</html>
